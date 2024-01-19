@@ -19,5 +19,8 @@ QCD_MINIMUMLINES=8 # "popularness" threshold
 QCD_HOME="$HOME" # home for the qcd data file
 ```
 
+### Manually adding a tag
+`qcd-add /the/entire/path/`
+
 ##### License
 qcd.bash is licensed under the GNU AGPLv3
