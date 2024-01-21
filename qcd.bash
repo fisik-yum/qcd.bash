@@ -25,7 +25,7 @@ export dirlist="" # don't override this!
 qcd-transparent ()
 {
     cd "$@"
-    if ! [[ "$(pwd)" == "$QCD_HOME" ]]; then
+    if ! [[ "$(realpath $(pwd))" == "$QCD_HOME" ]]; then
         dirlist+='"'$(pwd)'"'" "
         if ! [[ "$1" = .. ]]; then
             __qcd_check
@@ -47,7 +47,7 @@ qcd ()
 qcd-add () #$dir
 {
     if [[ $1 == "." ]]; then
-        __qcd_tagprompt $(pwd)
+        __qcd_tagprompt $(realpath $(pwd))
     elif [[ -z "${1// }" || $1 == ".." ]]; then
         while true; do
             read -e -p "Enter directory: " loc
@@ -65,6 +65,7 @@ qcd-add () #$dir
 
 qcd_init ()
 {
+    QCD_HOME=$(realpath "$QCD_HOME")
     if ! [ -f "$QCD_HOME/.qcdrc" ]; then
         touch "$QCD_HOME/.qcdrc"
     fi
@@ -72,11 +73,11 @@ qcd_init ()
 
 __qcd_check ()
 {
-    num=$(echo -n $dirlist | grep -Fo '"'$(pwd)'"' | wc -l)
-    if [[ $num -eq QCD_MINIMUMLINES ]]; then
+    num=$(echo -n $dirlist | grep -Fo '"'$(realpath $(pwd))'"' | wc -l)
+    if [[ $num -eq QCD_MINIMUMLINES && $(__qcd_rccheck $(realpath $(pwd))) ]]; then
         read -p "qcd: Create tag [yN]?" yn
             case $yn in
-                [Yy]* )  __qcd_tagprompt $(pwd) ; return 0;;
+                [Yy]* )  __qcd_tagprompt "$(realpath $(pwd))" ; return 0;;
                 [Nn]* ) return 1;;
                 * ) return 1;;
             esac
@@ -90,7 +91,7 @@ __qcd_tagprompt () #$value
         if [[ -z "${name// }" || ! $(__qcd_rcread $name) == "" ]]; then
             echo "Please enter a valid name. The name specified may already be in use."
         else
-            __qcd_rcwrite $name $1
+            __qcd_rcwrite $name $(realpath $(pwd))
             break
         fi
     done
@@ -117,8 +118,23 @@ __qcd_rcread () #$key
         value=${line#* }
         if [[ $1 == $key ]]; then
             echo $value
-            break 
+            return 0 
         fi
     done < "$input"
-    echo ""
+    return 1
+}
+
+
+__qcd_rccheck () #$value
+{
+    input="$QCD_HOME/.qcdrc"
+    while IFS= read -r line
+    do
+        key=${line%% *}
+        value=${line#* }
+        if [[ $1 = $value ]]; then
+            return 1 
+        fi
+    done < "$input"
+    return 0
 }
