@@ -19,6 +19,7 @@
 # default configuration - can be overriden after sourcing in .bashrc
 export QCD_MINIMUMLINES=8
 export QCD_HOME="$HOME"
+export QCD_TABCOMPLETE=1
 
 export dirlist="" # don't override this!
 
@@ -54,13 +55,18 @@ qcd-add () #$dir
             if [[ -z "${loc// }" ]]; then
                 echo "Please enter a valid directory."
             else
-                __qcd_tagprompt $loc
+                __qcd_tagprompt $(realpath $loc)
                 break
             fi
         done
     else
-        __qcd_tagprompt $1
+        __qcd_tagprompt $(realpath $1)
     fi
+}
+
+qcd-list ()
+{
+    cat "$QCD_HOME/.qcdrc"
 }
 
 qcd_init ()
@@ -69,12 +75,18 @@ qcd_init ()
     if ! [ -f "$QCD_HOME/.qcdrc" ]; then
         touch "$QCD_HOME/.qcdrc"
     fi
+    if [[ $QCD_TABCOMPLETE ]]; then
+        complete -F __qcd_listtags qcd
+    fi
+    complete -A directory qcd-add
+
 }
 
 __qcd_check ()
 {
     num=$(echo -n $dirlist | grep -Fo '"'$(realpath $(pwd))'"' | wc -l)
-    if [[ $num -eq QCD_MINIMUMLINES && $(__qcd_rccheck $(realpath $(pwd))) ]]; then
+
+    if [[ $num -eq QCD_MINIMUMLINES && $(__qcd_rccheck $(realpath $(pwd))) == "noexists" ]]; then
         read -p "qcd: Create tag [yN]?" yn
             case $yn in
                 [Yy]* )  __qcd_tagprompt "$(realpath $(pwd))" ; return 0;;
@@ -91,7 +103,7 @@ __qcd_tagprompt () #$value
         if [[ -z "${name// }" || ! $(__qcd_rcread $name) == "" ]]; then
             echo "Please enter a valid name. The name specified may already be in use."
         else
-            __qcd_rcwrite $name $(realpath $(pwd))
+            __qcd_rcwrite $name $1
             break
         fi
     done
@@ -133,8 +145,19 @@ __qcd_rccheck () #$value
         key=${line%% *}
         value=${line#* }
         if [[ $1 = $value ]]; then
-            return 1 
+            echo "exists"
         fi
     done < "$input"
-    return 0
+    echo "noexists"
+}
+
+__qcd_listtags ()
+{
+    input="$QCD_HOME/.qcdrc"
+    output=""
+    while IFS= read -r line
+    do
+        key=${line%% *}
+        COMPREPLY+=($key)
+    done < "$input"
 }

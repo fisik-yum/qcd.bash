@@ -5,22 +5,28 @@
 qcd was inspired by [warpdrive-go](https://github.com/quackduck/warpdrive-go)
 
 #### Installation
-
-First source the file in your rcfile and call the initialization function
-`source /path/to/qcd.bash`
-
-Then create an alias mapping `cd` to `qcd-transparent`
-`alias cd="qcd-transparent"`
+This has only been tested with bash. It should work with a bash-compatible shell, but I haven't tested.\
+Add this to your `.bashrc` or `.somerc` 
+```bash
+source /path/to/qcd.bash 
+alias cd="qcd-transparent"
+qcd_init
+```
 
 ### Configuration
-Behavior can be modified after sourcing `qcd`.
-```
-QCD_MINIMUMLINES=8 # "popularness" threshold
-QCD_HOME="$HOME" # home for the qcd data file
+Behavior can be modified after calling `qcd_init`.
+```bash
+QCD_MINIMUMLINES=8		# "popularness" threshold
+QCD_HOME="$HOME"		# home for the qcd data file
+QCD_TABCOMPLETE=1		# basic bash completion for the qcd command only
 ```
 
-### Manually adding a tag
-`qcd-add /the/entire/path/`
+### Using qcd
+```bash
+qcd <tag>				# cd to a tag
+qcd-add /path/of/dir    # manually tag a path (can be "." or no path for full interactive mode)
+qcd-list                # list all tags (cat output of qcdrc)`
+```
 
 ##### License
 qcd.bash is licensed under the GNU AGPLv3
