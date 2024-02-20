@@ -23,9 +23,8 @@ QCD_TABCOMPLETE=1		# basic bash completion for the qcd command only
 
 ### Using qcd
 ```bash
-qcd <tag>				# cd to a tag
+qcd [-h|-l|tag]				# show help, list tags, or cd to a tagged directory
 qcd-add /path/of/dir    # manually tag a path (can be "." or no path for full interactive mode)
-qcd-list                # list all tags (cat output of qcdrc)`
 ```
 
 ##### License

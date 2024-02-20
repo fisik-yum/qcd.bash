@@ -22,11 +22,11 @@ export QCD_MINIMUMLINES=8
 export QCD_HOME="$HOME"
 export QCD_TABCOMPLETE=1
 
-export dirlist="" # don't override this!
+export dirlist=() # don't override this!
 
 qcd-transparent ()
 {
-    cd "$@" || exit
+    cd "$@"
     if ! [[ "$(realpath "$(pwd)")" == "$QCD_HOME" ]]; then
         dirlist+='"'$(pwd)'"'" "
         if ! [[ "$1" = .. ]]; then
@@ -37,13 +37,25 @@ qcd-transparent ()
 }
 
 qcd ()
-{ 
+{
+    while getopts "hl" flag
+    do
+        case "${flag}" in
+            h)echo "USAGE: qcd [-h|-l|tag]" && return;; 
+	        l)cat "$QCD_HOME/.qcdrc" && return;;
+            *);; 
+        esac
+    done
+
+    #When no argument is supplied, try to find a tag    
     tdir=$(__qcd_rcread "$1")
     if ! [[ "$tdir" == "" ]]; then
-        cd "$tdir" || exit
+        cd "$tdir" || return
     else
         echo "qcd: $1: No such tag"
     fi
+
+    
 }
 
 qcd-add () #$dir
@@ -65,11 +77,6 @@ qcd-add () #$dir
     fi
 }
 
-qcd-list ()
-{
-    cat "$QCD_HOME/.qcdrc"
-}
-
 qcd_init ()
 {
     QCD_HOME=$(realpath "$QCD_HOME")
@@ -85,7 +92,7 @@ qcd_init ()
 
 __qcd_check ()
 {
-    num=$(echo -n $dirlist | grep -Fo '"'$(realpath $(pwd))'"' | wc -l)
+    num=$(echo -n $dirlist | grep -Fo '"'"$(realpath "$(pwd)")"'"' | wc -l)
 
     if [[ $num -eq QCD_MINIMUMLINES && $(__qcd_rccheck "$(realpath "$(pwd)")") == "noexists" ]]; then
         read -p "qcd: Create tag [yN]?" yn
