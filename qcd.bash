@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # qcd.bash - a somewhat smarter cd command
 #    Copyright (C) 2024  fisik_yum
 #
@@ -14,7 +16,6 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#!/bin/bash
 
 # default configuration - can be overriden after sourcing in .bashrc
 export QCD_MINIMUMLINES=8
@@ -25,8 +26,8 @@ export dirlist="" # don't override this!
 
 qcd-transparent ()
 {
-    cd "$@"
-    if ! [[ "$(realpath $(pwd))" == "$QCD_HOME" ]]; then
+    cd "$@" || exit
+    if ! [[ "$(realpath "$(pwd)")" == "$QCD_HOME" ]]; then
         dirlist+='"'$(pwd)'"'" "
         if ! [[ "$1" = .. ]]; then
             __qcd_check
@@ -37,9 +38,9 @@ qcd-transparent ()
 
 qcd ()
 { 
-    tdir=$(__qcd_rcread $1)
-    if ! [[ $tdir == "" ]]; then
-        cd $tdir
+    tdir=$(__qcd_rcread "$1")
+    if ! [[ "$tdir" == "" ]]; then
+        cd "$tdir" || exit
     else
         echo "qcd: $1: No such tag"
     fi
@@ -48,19 +49,19 @@ qcd ()
 qcd-add () #$dir
 {
     if [[ $1 == "." ]]; then
-        __qcd_tagprompt $(realpath $(pwd))
+        __qcd_tagprompt "$(realpath "$(pwd)")"
     elif [[ -z "${1// }" || $1 == ".." ]]; then
         while true; do
             read -e -p "Enter directory: " loc
             if [[ -z "${loc// }" ]]; then
                 echo "Please enter a valid directory."
             else
-                __qcd_tagprompt $(realpath $loc)
+                __qcd_tagprompt "$(realpath "$loc")"
                 break
             fi
         done
     else
-        __qcd_tagprompt $(realpath $1)
+        __qcd_tagprompt "$(realpath "$1")"
     fi
 }
 
@@ -86,10 +87,10 @@ __qcd_check ()
 {
     num=$(echo -n $dirlist | grep -Fo '"'$(realpath $(pwd))'"' | wc -l)
 
-    if [[ $num -eq QCD_MINIMUMLINES && $(__qcd_rccheck $(realpath $(pwd))) == "noexists" ]]; then
+    if [[ $num -eq QCD_MINIMUMLINES && $(__qcd_rccheck "$(realpath "$(pwd)")") == "noexists" ]]; then
         read -p "qcd: Create tag [yN]?" yn
             case $yn in
-                [Yy]* )  __qcd_tagprompt "$(realpath $(pwd))" ; return 0;;
+                [Yy]* )  __qcd_tagprompt "$(realpath "$(pwd)")" ; return 0;;
                 [Nn]* ) return 1;;
                 * ) return 1;;
             esac
@@ -154,7 +155,6 @@ __qcd_rccheck () #$value
 __qcd_listtags ()
 {
     input="$QCD_HOME/.qcdrc"
-    output=""
     while IFS= read -r line
     do
         key=${line%% *}
