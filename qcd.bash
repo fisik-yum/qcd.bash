@@ -27,9 +27,9 @@ export dirlist=() # don't override this!
 qcd-transparent ()
 {
     cd "$@"
-    if ! [[ "$(realpath "$(pwd)")" == "$QCD_HOME" ]]; then
+    if ! [[ "$(realpath "$(pwd)")" = "$QCD_HOME" ]]; then
         dirlist+='"'$(pwd)'"'" "
-        if ! [[ "$1" = .. ]]; then
+        if ! [[ "$1" == ".." ]]; then
             __qcd_check
         fi
     fi
