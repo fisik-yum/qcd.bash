@@ -18,64 +18,32 @@
 
 
 # default configuration - can be overriden after sourcing in .bashrc
-export QCD_MINIMUMLINES=8
 export QCD_HOME="$HOME"
 export QCD_TABCOMPLETE=1
 
-export dirlist=() # don't override this!
 
-qcd-transparent ()
-{
-    cd "$@"
-    if ! [[ "$(realpath "$(pwd)")" = "$QCD_HOME" ]]; then
-        dirlist+='"'$(pwd)'"'" "
-        if ! [[ "$1" == ".." ]]; then
-            __qcd_check
-        fi
-    fi
-
-}
 
 qcd ()
 {
     while getopts "hl" flag
     do
         case "${flag}" in
-            h)echo "USAGE: qcd [-h|-l|tag]" && return;; 
+            h)echo "USAGE: qcd [-h|-l|tag {modifiers}]" && return;; 
 	        l)cat "$QCD_HOME/.qcdrc" && return;;
             *);; 
         esac
     done
 
-    #When no argument is supplied, try to find a tag    
-    tdir=$(__qcd_rcread "$1")
+    tdir=$(__qcd_process "$1" "$2")
     if ! [[ "$tdir" == "" ]]; then
         cd "$tdir" || return
     else
-        echo "qcd: $1: No such tag"
+        echo "qcd: $1 $2: No such tag"
     fi
 
     
 }
 
-qcd-add () #$dir
-{
-    if [[ $1 == "." ]]; then
-        __qcd_tagprompt "$(realpath "$(pwd)")"
-    elif [[ -z "${1// }" || $1 == ".." ]]; then
-        while true; do
-            read -e -p "Enter directory: " loc
-            if [[ -z "${loc// }" ]]; then
-                echo "Please enter a valid directory."
-            else
-                __qcd_tagprompt "$(realpath "$loc")"
-                break
-            fi
-        done
-    else
-        __qcd_tagprompt "$(realpath "$1")"
-    fi
-}
 
 qcd_init ()
 {
@@ -86,35 +54,6 @@ qcd_init ()
     if [[ $QCD_TABCOMPLETE ]]; then
         complete -F __qcd_listtags qcd
     fi
-    complete -A directory qcd-add
-
-}
-
-__qcd_check ()
-{
-    num=$(echo -n $dirlist | grep -Fo '"'"$(realpath "$(pwd)")"'"' | wc -l)
-
-    if [[ $num -eq QCD_MINIMUMLINES && $(__qcd_rccheck "$(realpath "$(pwd)")") == "noexists" ]]; then
-        read -p "qcd: Create tag [yN]?" yn
-            case $yn in
-                [Yy]* )  __qcd_tagprompt "$(realpath "$(pwd)")" ; return 0;;
-                [Nn]* ) return 1;;
-                * ) return 1;;
-            esac
-    fi
-}
-
-__qcd_tagprompt () #$value
-{
-    while true; do
-        read -p "Enter tag name: " name
-        if [[ -z "${name// }" || ! $(__qcd_rcread $name) == "" ]]; then
-            echo "Please enter a valid name. The name specified may already be in use."
-        else
-            __qcd_rcwrite $name $1
-            break
-        fi
-    done
 
 }
 
@@ -128,7 +67,7 @@ __qcd_rcwrite () #$key $value
 
 }
 
-
+# read/transform some sort of command
 __qcd_rcread () #$key
 {
     input="$QCD_HOME/.qcdrc"
@@ -144,19 +83,27 @@ __qcd_rcread () #$key
     return 1
 }
 
-
-__qcd_rccheck () #$value
-{
-    input="$QCD_HOME/.qcdrc"
-    while IFS= read -r line
-    do
-        key=${line%% *}
-        value=${line#* }
-        if [[ $1 = $value ]]; then
-            echo "exists"
+__qcd_process() { # $op $mod
+    #check if positional operation
+    if [[ "$(echo "$(echo "$1" | tail -c 2)")" == "d" ]]; then
+        if [[ "${1::-1}" =~ ^[0-9]+$ ]]; then
+            ret=""
+            for i in $(seq "${1::-1}"); do
+                ret=$ret"../"
+            done
+        echo "$ret""$2"
+        return 0
         fi
-    done < "$input"
-    echo "noexists"
+    fi
+    # check if key
+    ret="$(__qcd_rcread $1)"
+    if ! [[ "$ret" == "" ]]; then
+        echo "$ret""$2" 
+        return 0
+    fi
+    echo "$ret"
+    return 1
+    
 }
 
 __qcd_listtags ()
