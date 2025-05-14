@@ -91,14 +91,14 @@ __qcd_process() { # $op $mod
             for i in $(seq "${1::-1}"); do
                 ret=$ret"../"
             done
-        echo "$ret""$2"
+        echo "$ret""/""$2"
         return 0
         fi
     fi
     # check if key
     ret="$(__qcd_rcread $1)"
     if ! [[ "$ret" == "" ]]; then
-        echo "$ret""$2" 
+        echo "$ret""/""$2" 
         return 0
     fi
     echo "$ret"
