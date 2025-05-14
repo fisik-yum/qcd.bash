@@ -6,25 +6,22 @@ qcd was inspired by [warpdrive-go](https://github.com/quackduck/warpdrive-go)
 
 #### Installation
 This has only been tested with bash. It should work with a bash-compatible shell, but I haven't tested.\
-Add this to your `.bashrc` or `.somerc` 
+Add this to your `.bashrc`. 
 ```bash
 source /path/to/qcd.bash 
-alias cd="qcd-transparent"
 qcd_init
 ```
 
 ### Configuration
 Behavior can be modified after calling `qcd_init`.
 ```bash
-QCD_MINIMUMLINES=8		# "popularness" threshold
 QCD_HOME="$HOME"		# home for the qcd data file
 QCD_TABCOMPLETE=1		# basic bash completion for the qcd command only
 ```
 
 ### Using qcd
 ```bash
-qcd [-h|-l|tag]				# show help, list tags, or cd to a tagged directory
-qcd-add /path/of/dir    # manually tag a path (can be "." or no path for full interactive mode)
+qcd [-h|-l|tag {modifiers}]				# show help, list tags, or cd to a tagged directory
 ```
 
 ##### License
